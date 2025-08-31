@@ -24,12 +24,13 @@ export default function NumericCard() {
         {/* Input */}
         <form className="mb-4">
           <input
-            type="number"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="w-full border rounded-lg p-2 text-center text-lg"
-            placeholder="Escribe o usa el teclado"
-          />
+  type="number"
+  value={value}
+  onChange={(e) => setValue(e.target.value)}
+  className="w-full border border-white rounded-lg p-2 text-center text-lg text-white placeholder-white bg-transparent focus:outline-none focus:ring-2 focus:ring-white"
+  placeholder="Escribe o usa el teclado"
+/>
+
         </form>
 
         {/* Teclado numérico */}
