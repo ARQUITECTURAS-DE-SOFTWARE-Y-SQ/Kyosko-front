@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import GestionPQRSModal from "./Secciones/modalGenerarPqr";
 
-interface Item {
+
+export interface Item {
   id: number;
   name: string;
   description: string;
 }
 
-const data: Item[] = [
+ const data: Item[] = [
   { id: 1, name: "Producto A", description: "Descripción del producto A" },
   { id: 2, name: "Producto B", description: "Descripción del producto B" },
   { id: 3, name: "Producto C", description: "Descripción del producto C" },
@@ -23,9 +25,19 @@ const columns: { name: string; key: keyof Item }[] = [
   { name: "Descripción", key: "description" },
 ];
 
-export default function GridWithModal() {
-  const [selected, setSelected] = useState<Item | null>(null);
+type GridWithModalProps = {
+  docUser?: string;    
+};
 
+export default function GridWithModal({  docUser }: GridWithModalProps) {
+  const [selected, setSelected] = useState<Item | null>(null);
+  const [mostrarModalGeneracionPQR, setmostrarModalGeneracionPQR] = useState(false)
+  const [idUsuario, setidUsuario] = useState(1)  
+
+  useEffect(() => {
+    setidUsuario(idUsuario) //Pendiente dar el id del usuario que deberia llegar por prop
+  }, [])
+  
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold mb-4">Tus Beneficios disponibles</h2>
@@ -58,7 +70,7 @@ export default function GridWithModal() {
           ))}
         </tbody>
       </table>
-
+            
       {/* Modal */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent>
@@ -75,11 +87,22 @@ export default function GridWithModal() {
             </div>
           )}
           <DialogFooter className="flex justify-end gap-2">
+            <Button variant="destructive" onClick={() => setmostrarModalGeneracionPQR(true)}>Generar PQR</Button>
             <Button variant="outline" onClick={() => setSelected(null)}>Cancelar</Button>
             <Button onClick={() => alert(`Acción confirmada para ${selected?.name}`)}>Aceptar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {mostrarModalGeneracionPQR && 
+        <GestionPQRSModal  
+        cerrarModal={()=>setmostrarModalGeneracionPQR(false)}
+        beneficioSeleccionado={selected!}
+        idUsuario = {parseInt(docUser!)}/>        
+      }
+      
+      {/* Modal generacion pqr*/}
+
     </div>
   );
 }

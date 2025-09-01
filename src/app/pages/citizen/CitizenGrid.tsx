@@ -6,8 +6,8 @@ import {
   fetchCitizens,
   createCitizen,
   updateCitizen,
-  deleteCitizen,
   Citizen,
+  deleteCitizen
 } from "../../service/usercases/citizen.service";
 import CitizenFormModal from "./CitizenFormModal";
 import { Button } from "@mui/material";
