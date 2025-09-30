@@ -3,103 +3,97 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import GestionPQRSModal from "./Secciones/modalGenerarPqr";
-import AddBenefitModal from "./addBenefitModal";
-import { benefitService, type Benefit } from "@/app/service/usercases/benefit.service";
+import AddSubsidyModal from "./addSubsidyModal";
+import { subsidyService, type Subsidy } from "@/app/service/usercases/subsidy.service";
 
-
-export interface Item {
+export interface SubsidyItem {
   id: number;
-  name: string;
+  title: string;
   description: string;
+  amount: number;
 }
 
-// Definición dinámica de columnas
-const columns: { name: string; key: keyof Item }[] = [
+const columns: { name: string; key: keyof SubsidyItem }[] = [
   { name: "ID", key: "id" },
-  { name: "Nombre", key: "name" },
+  { name: "Título", key: "title" },
   { name: "Descripción", key: "description" },
+  { name: "Monto", key: "amount" },
 ];
 
-type GridWithModalProps = {
+type SubsidyGridProps = {
   docUser?: string;
   allowAdd?: boolean;
 };
 
-export default function GridWithModal({  docUser, allowAdd = false }: GridWithModalProps) {
-  const [selected, setSelected] = useState<Item | null>(null);
-  const [mostrarModalGeneracionPQR, setmostrarModalGeneracionPQR] = useState(false);
+export default function SubsidyGrid({ docUser, allowAdd = false }: SubsidyGridProps) {
+  const [selected, setSelected] = useState<SubsidyItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [idUsuario, setidUsuario] = useState(1);
-  const [data, setData] = useState<Item[]>([]);
-  const [benefits, setBenefits] = useState<Benefit[]>([]);
+  const [data, setData] = useState<SubsidyItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setidUsuario(idUsuario);
-    loadBenefits();
-  }, []);
+    loadSubsidies();
+  }, [docUser]);
 
-  const loadBenefits = async () => {
+  const loadSubsidies = async () => {
     try {
       setLoading(true);
-      let loadedBenefits: Benefit[];
+      let subsidies: Subsidy[];
 
       if (docUser) {
-        loadedBenefits = await benefitService.getByCitizenId(parseInt(docUser));
+        subsidies = await subsidyService.getByCitizenId(parseInt(docUser));
       } else {
-        loadedBenefits = await benefitService.getAll();
+        subsidies = await subsidyService.getAll();
       }
 
-      setBenefits(loadedBenefits);
-
-      const mappedData: Item[] = loadedBenefits.map(b => ({
-        id: b.id || 0,
-        name: b.tittle,
-        description: b.description
+      const mappedData: SubsidyItem[] = subsidies.map(s => ({
+        id: s.id || 0,
+        title: s.title,
+        description: s.description,
+        amount: s.amount
       }));
 
       setData(mappedData);
     } catch (error) {
-      console.error("Error loading benefits:", error);
+      console.error("Error loading subsidies:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Está seguro de eliminar este beneficio?")) return;
+    if (!confirm("¿Está seguro de eliminar este subsidio?")) return;
 
     try {
-      await benefitService.delete(id);
-      loadBenefits();
+      await subsidyService.delete(id);
+      loadSubsidies();
     } catch (error) {
-      console.error("Error deleting benefit:", error);
-      alert("Error al eliminar el beneficio");
+      console.error("Error deleting subsidy:", error);
+      alert("Error al eliminar el subsidio");
     }
   };
-  
+
   return (
     <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">
-          {docUser ? "Tus Beneficios" : "Lista de Beneficios Disponibles"}
+          {docUser ? "Tus Subsidios" : "Lista de Subsidios Disponibles"}
         </h2>
         {allowAdd && (
           <Button onClick={() => setShowAddModal(true)}>
-            + Agregar Beneficio
+            + Agregar Subsidio
           </Button>
         )}
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Cargando beneficios...</div>
+        <div className="text-center py-8">Cargando subsidios...</div>
       ) : data.length === 0 ? (
         <div className="text-center py-8">
-          <p>{docUser ? "No tienes beneficios asignados" : "No hay beneficios disponibles"}</p>
+          <p>{docUser ? "No tienes subsidios asignados" : "No hay subsidios disponibles"}</p>
           {allowAdd && (
             <Button onClick={() => setShowAddModal(true)} className="mt-4">
-              + Crear primer beneficio
+              + Crear primer subsidio
             </Button>
           )}
         </div>
@@ -122,7 +116,7 @@ export default function GridWithModal({  docUser, allowAdd = false }: GridWithMo
                   {columns.map((col) => (
                     <td key={col.key as string} className={`p-2 border ${col.key === 'description' ? 'max-w-2xl' : ''}`}>
                       <div className={col.key === 'description' ? 'line-clamp-2' : ''}>
-                        {item[col.key]}
+                        {col.key === "amount" ? `$${item[col.key].toLocaleString()}` : item[col.key]}
                       </div>
                     </td>
                   ))}
@@ -150,44 +144,33 @@ export default function GridWithModal({  docUser, allowAdd = false }: GridWithMo
       )}
 
       {/* Add/Edit Modal */}
-      <AddBenefitModal
+      <AddSubsidyModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSuccess={loadBenefits}
+        onSuccess={loadSubsidies}
       />
 
       {/* Modal */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Detalle del Registro</DialogTitle>
+            <DialogTitle>Detalle del Subsidio</DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="p-4 space-y-2">
               {columns.map((col) => (
                 <p key={col.key as string}>
-                  <span className="font-semibold">{col.name}:</span> {selected[col.key]}
+                  <span className="font-semibold">{col.name}:</span>{" "}
+                  {col.key === "amount" ? `$${selected[col.key].toLocaleString()}` : selected[col.key]}
                 </p>
               ))}
             </div>
           )}
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="destructive" onClick={() => setmostrarModalGeneracionPQR(true)}>Generar PQR</Button>
-            <Button variant="outline" onClick={() => setSelected(null)}>Cancelar</Button>
-            <Button onClick={() => alert(`Acción confirmada para ${selected?.name}`)}>Aceptar</Button>
+            <Button variant="outline" onClick={() => setSelected(null)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {mostrarModalGeneracionPQR && 
-        <GestionPQRSModal  
-        cerrarModal={()=>setmostrarModalGeneracionPQR(false)}
-        beneficioSeleccionado={selected!}
-        idUsuario = {parseInt(docUser!)}/>        
-      }
-      
-      {/* Modal generacion pqr*/}
-
     </div>
   );
 }
